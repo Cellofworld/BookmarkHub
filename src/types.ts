@@ -21,6 +21,15 @@ export interface CellStyle {
   color?: string;
   background?: string;
   align?: 'left' | 'center' | 'right';
+  formula?: string;
+}
+
+export interface TableColumn {
+  id: string;
+  header: string;
+  type: 'text' | 'number' | 'date' | 'checkbox' | 'formula';
+  width?: number;
+  formula?: string;
 }
 
 export interface Table {
@@ -29,7 +38,10 @@ export interface Table {
   description: string;
   headers: string[];
   rows: string[][];
+  columns?: TableColumn[];
   cellStyles?: Record<string, CellStyle>;
+  frozenRows?: number;
+  frozenColumns?: number;
   createdAt: number;
   updatedAt: number;
 }
