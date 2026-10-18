@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { AppData, loadInitialData, loadData, saveData } from '../utils/dataStorage';
+import { AppData } from '../types';
+import { loadInitialData, loadData, saveData } from '../utils/dataStorage';
 
 export function useAppData() {
   const [data, setData] = useState<AppData | null>(null);
@@ -7,7 +8,6 @@ export function useAppData() {
 
   useEffect(() => {
     const initializeData = async () => {
-      // Try to load from localStorage first
       const storedData = loadData();
       if (storedData) {
         setData(storedData);
@@ -15,7 +15,6 @@ export function useAppData() {
         return;
       }
 
-      // If no stored data, load from JSON file
       const initialData = await loadInitialData();
       setData(initialData);
       saveData(initialData);

@@ -12,6 +12,19 @@ export default function TableViewModal({ isOpen, onClose, table, onEdit }: Table
 
   const hasData = table.rows.some((row) => row.some((cell) => cell.trim() !== ''));
 
+  const getCellStyle = (rowIndex: number, colIndex: number): React.CSSProperties => {
+    const key = `${rowIndex}-${colIndex}`;
+    const style = table.cellStyles?.[key];
+    if (!style) return {};
+    return {
+      fontWeight: style.bold ? 'bold' : 'normal',
+      fontStyle: style.italic ? 'italic' : 'normal',
+      color: style.color || 'inherit',
+      backgroundColor: style.background || 'transparent',
+      textAlign: style.align || 'left',
+    };
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal modal--full" onClick={(e) => e.stopPropagation()}>
@@ -22,25 +35,13 @@ export default function TableViewModal({ isOpen, onClose, table, onEdit }: Table
                 <span>📊</span>
                 {table.title}
               </h2>
-              {table.description && (
-                <p className="table-view__description">{table.description}</p>
-              )}
+              {table.description && <p className="table-view__description">{table.description}</p>}
             </div>
             <div className="table-view__actions">
-              <button
-                className="table-view__edit-btn"
-                onClick={() => {
-                  onEdit(table);
-                  onClose();
-                }}
-              >
+              <button className="table-view__edit-btn" onClick={() => { onEdit(table); onClose(); }}>
                 Редактировать
               </button>
-              <button className="table-view__close-btn" onClick={onClose}>
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <button className="table-view__close-btn" onClick={onClose}>×</button>
             </div>
           </div>
         </div>
@@ -60,7 +61,9 @@ export default function TableViewModal({ isOpen, onClose, table, onEdit }: Table
                   {table.rows.map((row, rowIndex) => (
                     <tr key={rowIndex}>
                       {row.map((cell, colIndex) => (
-                        <td key={colIndex}>{cell}</td>
+                        <td key={colIndex} style={getCellStyle(rowIndex, colIndex)}>
+                          {cell || '—'}
+                        </td>
                       ))}
                     </tr>
                   ))}
@@ -71,9 +74,7 @@ export default function TableViewModal({ isOpen, onClose, table, onEdit }: Table
             <div className="empty-state">
               <div className="empty-state__icon">📭</div>
               <h3 className="empty-state__title">Таблица пуста</h3>
-              <p className="empty-state__description">
-                Добавьте данные, нажав кнопку "Редактировать"
-              </p>
+              <p className="empty-state__description">Добавьте данные, нажав кнопку "Редактировать"</p>
             </div>
           )}
         </div>

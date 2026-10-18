@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table } from '../types';
+import { Table, CellStyle } from '../types';
 
 interface TableEditorModalProps {
   isOpen: boolean;
@@ -12,10 +12,12 @@ export default function TableEditorModal({ isOpen, onClose, onSave, table }: Tab
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [headers, setHeaders] = useState<string[]>(['Столбец 1', 'Столбец 2', 'Столбец 3']);
-  const [rows, setRows] = useState<string[][]>([
-    ['', '', ''],
-    ['', '', ''],
-  ]);
+  const [rows, setRows] = useState<string[][]>([['', '', ''], ['', '', '']]);
+  const [cellStyles, setCellStyles] = useState<Record<string, CellStyle>>({});
+  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+  const [sortColumn, setSortColumn] = useState<number | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [showFormatting, setShowFormatting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -24,27 +26,27 @@ export default function TableEditorModal({ isOpen, onClose, onSave, table }: Tab
         setDescription(table.description);
         setHeaders(table.headers);
         setRows(table.rows);
+        setCellStyles(table.cellStyles || {});
       } else {
         setTitle('');
         setDescription('');
         setHeaders(['Столбец 1', 'Столбец 2', 'Столбец 3']);
-        setRows([
-          ['', '', ''],
-          ['', '', ''],
-        ]);
+        setRows([['', '', ''], ['', '', '']]);
+        setCellStyles({});
       }
+      setSelectedCells(new Set());
+      setSortColumn(null);
     }
   }, [isOpen, table]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     if (!title.trim()) return;
-    
     onSave({
       title: title.trim(),
       description: description.trim(),
       headers,
       rows,
+      cellStyles,
     });
     onClose();
   };
@@ -57,9 +59,16 @@ export default function TableEditorModal({ isOpen, onClose, onSave, table }: Tab
 
   const removeColumn = (colIndex: number) => {
     if (headers.length <= 1) return;
-    const newHeaders = headers.filter((_, i) => i !== colIndex);
-    setHeaders(newHeaders);
+    setHeaders(headers.filter((_, i) => i !== colIndex));
     setRows(rows.map((row) => row.filter((_, i) => i !== colIndex)));
+    // Remove styles for this column
+    const newStyles: Record<string, CellStyle> = {};
+    Object.entries(cellStyles).forEach(([key, style]) => {
+      const [r, c] = key.split('-').map(Number);
+      if (c < colIndex) newStyles[key] = style;
+      else if (c > colIndex) newStyles[`${r}-${c - 1}`] = style;
+    });
+    setCellStyles(newStyles);
   };
 
   const addRow = () => {
@@ -69,6 +78,13 @@ export default function TableEditorModal({ isOpen, onClose, onSave, table }: Tab
   const removeRow = (rowIndex: number) => {
     if (rows.length <= 1) return;
     setRows(rows.filter((_, i) => i !== rowIndex));
+    const newStyles: Record<string, CellStyle> = {};
+    Object.entries(cellStyles).forEach(([key, style]) => {
+      const [r, c] = key.split('-').map(Number);
+      if (r < rowIndex) newStyles[key] = style;
+      else if (r > rowIndex) newStyles[`${r - 1}-${c}`] = style;
+    });
+    setCellStyles(newStyles);
   };
 
   const updateHeader = (index: number, value: string) => {
@@ -78,13 +94,118 @@ export default function TableEditorModal({ isOpen, onClose, onSave, table }: Tab
   };
 
   const updateCell = (rowIndex: number, colIndex: number, value: string) => {
-    const newRows = [...rows];
-    newRows[rowIndex] = [...newRows[rowIndex]];
+    const newRows = rows.map((row) => [...row]);
     newRows[rowIndex][colIndex] = value;
     setRows(newRows);
   };
 
+  const toggleCellSelection = (rowIndex: number, colIndex: number, e: React.MouseEvent) => {
+    const key = `${rowIndex}-${colIndex}`;
+    const newSelected = new Set(selectedCells);
+    
+    if (e.shiftKey && selectedCells.size > 0) {
+      // Range selection
+      const lastKey = Array.from(selectedCells).pop()!;
+      const [lastR, lastC] = lastKey.split('-').map(Number);
+      const minR = Math.min(lastR, rowIndex);
+      const maxR = Math.max(lastR, rowIndex);
+      const minC = Math.min(lastC, colIndex);
+      const maxC = Math.max(lastC, colIndex);
+      
+      for (let r = minR; r <= maxR; r++) {
+        for (let c = minC; c <= maxC; c++) {
+          newSelected.add(`${r}-${c}`);
+        }
+      }
+    } else if (e.ctrlKey || e.metaKey) {
+      if (newSelected.has(key)) newSelected.delete(key);
+      else newSelected.add(key);
+    } else {
+      newSelected.clear();
+      newSelected.add(key);
+    }
+    
+    setSelectedCells(newSelected);
+  };
+
+  const applyStyleToSelected = (style: Partial<CellStyle>) => {
+    const newStyles = { ...cellStyles };
+    selectedCells.forEach((key) => {
+      newStyles[key] = { ...newStyles[key], ...style };
+    });
+    setCellStyles(newStyles);
+  };
+
+  const clearStyleFromSelected = () => {
+    const newStyles = { ...cellStyles };
+    selectedCells.forEach((key) => {
+      delete newStyles[key];
+    });
+    setCellStyles(newStyles);
+  };
+
+  const getCellStyle = (rowIndex: number, colIndex: number): React.CSSProperties => {
+    const key = `${rowIndex}-${colIndex}`;
+    const style = cellStyles[key];
+    if (!style) return {};
+    
+    return {
+      fontWeight: style.bold ? 'bold' : 'normal',
+      fontStyle: style.italic ? 'italic' : 'normal',
+      color: style.color || 'inherit',
+      backgroundColor: style.background || 'transparent',
+      textAlign: style.align || 'left',
+    };
+  };
+
+  const sortRows = (colIndex: number) => {
+    if (sortColumn === colIndex) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(colIndex);
+      setSortDirection('asc');
+    }
+    
+    const sorted = [...rows].sort((a, b) => {
+      const valA = a[colIndex] || '';
+      const valB = b[colIndex] || '';
+      const numA = parseFloat(valA);
+      const numB = parseFloat(valB);
+      
+      let comparison = 0;
+      if (!isNaN(numA) && !isNaN(numB)) {
+        comparison = numA - numB;
+      } else {
+        comparison = valA.localeCompare(valB, 'ru');
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+    
+    setRows(sorted);
+  };
+
+  const duplicateRow = (rowIndex: number) => {
+    const newRow = [...rows[rowIndex]];
+    const newRows = [...rows];
+    newRows.splice(rowIndex + 1, 0, newRow);
+    setRows(newRows);
+  };
+
+  const moveRow = (rowIndex: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? rowIndex - 1 : rowIndex + 1;
+    if (newIndex < 0 || newIndex >= rows.length) return;
+    
+    const newRows = [...rows];
+    [newRows[rowIndex], newRows[newIndex]] = [newRows[newIndex], newRows[rowIndex]];
+    setRows(newRows);
+  };
+
   if (!isOpen) return null;
+
+  const hasSelection = selectedCells.size > 0;
+  const firstSelectedKey = Array.from(selectedCells)[0];
+  const firstSelectedStyle = firstSelectedKey ? cellStyles[firstSelectedKey] || {} : {};
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -93,7 +214,7 @@ export default function TableEditorModal({ isOpen, onClose, onSave, table }: Tab
           <h2 className="modal__title">
             {table ? '✏️ Редактировать таблицу' : '📊 Новая таблица'}
           </h2>
-          <form onSubmit={handleSubmit} className="modal__form">
+          <div className="modal__form">
             <div className="modal__form-row">
               <div className="form-field">
                 <label className="form-field__label">Название *</label>
@@ -101,7 +222,7 @@ export default function TableEditorModal({ isOpen, onClose, onSave, table }: Tab
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Например: Расписание"
+                  placeholder="Название таблицы"
                   className="form-field__input"
                   required
                 />
@@ -112,12 +233,88 @@ export default function TableEditorModal({ isOpen, onClose, onSave, table }: Tab
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Необязательное описание..."
+                  placeholder="Описание (необязательно)"
                   className="form-field__input"
                 />
               </div>
             </div>
-          </form>
+          </div>
+        </div>
+
+        {/* Formatting Toolbar */}
+        <div className="table-toolbar">
+          <button
+            className={`table-toolbar__btn ${firstSelectedStyle.bold ? 'table-toolbar__btn--active' : ''}`}
+            onClick={() => applyStyleToSelected({ bold: !firstSelectedStyle.bold })}
+            disabled={!hasSelection}
+            title="Жирный"
+          >
+            <strong>B</strong>
+          </button>
+          <button
+            className={`table-toolbar__btn ${firstSelectedStyle.italic ? 'table-toolbar__btn--active' : ''}`}
+            onClick={() => applyStyleToSelected({ italic: !firstSelectedStyle.italic })}
+            disabled={!hasSelection}
+            title="Курсив"
+          >
+            <em>I</em>
+          </button>
+          <div className="table-toolbar__separator" />
+          <button
+            className={`table-toolbar__btn ${firstSelectedStyle.align === 'left' ? 'table-toolbar__btn--active' : ''}`}
+            onClick={() => applyStyleToSelected({ align: 'left' })}
+            disabled={!hasSelection}
+            title="По левому краю"
+          >
+            ≡
+          </button>
+          <button
+            className={`table-toolbar__btn ${firstSelectedStyle.align === 'center' ? 'table-toolbar__btn--active' : ''}`}
+            onClick={() => applyStyleToSelected({ align: 'center' })}
+            disabled={!hasSelection}
+            title="По центру"
+          >
+            ≡
+          </button>
+          <button
+            className={`table-toolbar__btn ${firstSelectedStyle.align === 'right' ? 'table-toolbar__btn--active' : ''}`}
+            onClick={() => applyStyleToSelected({ align: 'right' })}
+            disabled={!hasSelection}
+            title="По правому краю"
+          >
+            ≡
+          </button>
+          <div className="table-toolbar__separator" />
+          <label className="table-toolbar__color-picker" title="Цвет текста">
+            <input
+              type="color"
+              value={firstSelectedStyle.color || '#000000'}
+              onChange={(e) => applyStyleToSelected({ color: e.target.value })}
+              disabled={!hasSelection}
+            />
+            <span>A</span>
+          </label>
+          <label className="table-toolbar__color-picker" title="Цвет фона">
+            <input
+              type="color"
+              value={firstSelectedStyle.background || '#ffffff'}
+              onChange={(e) => applyStyleToSelected({ background: e.target.value })}
+              disabled={!hasSelection}
+            />
+            <span>🎨</span>
+          </label>
+          <div className="table-toolbar__separator" />
+          <button
+            className="table-toolbar__btn"
+            onClick={clearStyleFromSelected}
+            disabled={!hasSelection}
+            title="Очистить форматирование"
+          >
+            ✕
+          </button>
+          <div className="table-toolbar__info">
+            {hasSelection && `${selectedCells.size} ячеек выбрано`}
+          </div>
         </div>
 
         <div className="modal__body">
@@ -125,8 +322,9 @@ export default function TableEditorModal({ isOpen, onClose, onSave, table }: Tab
             <table className="table-editor__table">
               <thead>
                 <tr>
+                  <th className="table-editor__row-num-header">#</th>
                   {headers.map((header, colIndex) => (
-                    <th key={colIndex}>
+                    <th key={colIndex} className="table-editor__header-cell">
                       <input
                         type="text"
                         value={header}
@@ -134,30 +332,29 @@ export default function TableEditorModal({ isOpen, onClose, onSave, table }: Tab
                         className="table-editor__header-input"
                         placeholder="Заголовок"
                       />
-                      {headers.length > 1 && (
+                      <div className="table-editor__header-actions">
                         <button
-                          type="button"
-                          onClick={() => removeColumn(colIndex)}
-                          className="table-editor__remove-btn"
-                          title="Удалить столбец"
+                          onClick={() => sortRows(colIndex)}
+                          className="table-editor__sort-btn"
+                          title="Сортировать"
                         >
-                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
+                          {sortColumn === colIndex ? (sortDirection === 'asc' ? '↑' : '↓') : '⇅'}
                         </button>
-                      )}
+                        {headers.length > 1 && (
+                          <button
+                            onClick={() => removeColumn(colIndex)}
+                            className="table-editor__remove-btn"
+                            title="Удалить столбец"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
                     </th>
                   ))}
                   <th className="table-editor__action-cell">
-                    <button
-                      type="button"
-                      onClick={addColumn}
-                      className="table-editor__add-col-btn"
-                      title="Добавить столбец"
-                    >
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
+                    <button onClick={addColumn} className="table-editor__add-col-btn" title="Добавить столбец">
+                      +
                     </button>
                   </th>
                 </tr>
@@ -165,30 +362,36 @@ export default function TableEditorModal({ isOpen, onClose, onSave, table }: Tab
               <tbody>
                 {rows.map((row, rowIndex) => (
                   <tr key={rowIndex}>
-                    {row.map((cell, colIndex) => (
-                      <td key={colIndex}>
-                        <input
-                          type="text"
-                          value={cell}
-                          onChange={(e) => updateCell(rowIndex, colIndex, e.target.value)}
-                          className="table-editor__cell-input"
-                          placeholder="Ячейка"
-                        />
-                      </td>
-                    ))}
-                    <td className="table-editor__action-cell">
-                      {rows.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeRow(rowIndex)}
-                          className="table-editor__remove-row-btn"
-                          title="Удалить строку"
+                    <td className="table-editor__row-num">{rowIndex + 1}</td>
+                    {row.map((cell, colIndex) => {
+                      const key = `${rowIndex}-${colIndex}`;
+                      const isSelected = selectedCells.has(key);
+                      return (
+                        <td
+                          key={colIndex}
+                          className={`table-editor__cell ${isSelected ? 'table-editor__cell--selected' : ''}`}
+                          style={getCellStyle(rowIndex, colIndex)}
+                          onClick={(e) => toggleCellSelection(rowIndex, colIndex, e)}
                         >
-                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      )}
+                          <input
+                            type="text"
+                            value={cell}
+                            onChange={(e) => updateCell(rowIndex, colIndex, e.target.value)}
+                            className="table-editor__cell-input"
+                            placeholder="..."
+                          />
+                        </td>
+                      );
+                    })}
+                    <td className="table-editor__action-cell">
+                      <div className="table-editor__row-actions">
+                        <button onClick={() => moveRow(rowIndex, 'up')} disabled={rowIndex === 0} title="Вверх">↑</button>
+                        <button onClick={() => moveRow(rowIndex, 'down')} disabled={rowIndex === rows.length - 1} title="Вниз">↓</button>
+                        <button onClick={() => duplicateRow(rowIndex)} title="Дублировать">⧉</button>
+                        {rows.length > 1 && (
+                          <button onClick={() => removeRow(rowIndex)} className="table-editor__remove-row-btn" title="Удалить строку">×</button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -196,23 +399,19 @@ export default function TableEditorModal({ isOpen, onClose, onSave, table }: Tab
             </table>
           </div>
 
-          <button
-            type="button"
-            onClick={addRow}
-            className="table-editor__add-row-btn"
-          >
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Добавить строку
-          </button>
+          <div className="table-editor__footer-actions">
+            <button onClick={addRow} className="table-editor__add-row-btn">
+              + Добавить строку
+            </button>
+            <span className="table-editor__stats">
+              {rows.length} строк × {headers.length} столбцов
+            </span>
+          </div>
         </div>
 
         <div className="modal__footer">
-          <button type="button" onClick={onClose} className="modal__btn modal__btn--secondary">
-            Отмена
-          </button>
-          <button type="button" onClick={handleSubmit} className="modal__btn modal__btn--primary">
+          <button onClick={onClose} className="modal__btn modal__btn--secondary">Отмена</button>
+          <button onClick={handleSubmit} className="modal__btn modal__btn--primary">
             {table ? 'Сохранить' : 'Создать'}
           </button>
         </div>

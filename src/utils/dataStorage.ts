@@ -1,14 +1,10 @@
-import { Bookmark, Category, Table } from '../types';
+import { AppData } from '../types';
 
-export interface AppData {
-  categories: Category[];
-  bookmarks: Bookmark[];
-  tables: Table[];
-}
+export type { AppData } from '../types';
 
 const STORAGE_KEY = 'bookmarkhub-data';
+const SYNC_PATH_KEY = 'bookmarkhub-sync-path';
 
-// Load initial data from JSON file
 export async function loadInitialData(): Promise<AppData> {
   try {
     const response = await fetch('/data.json');
@@ -16,12 +12,11 @@ export async function loadInitialData(): Promise<AppData> {
       return await response.json();
     }
   } catch (error) {
-    console.error('Failed to load initial data:', error);
+    console.error('Failed to load initial ', error);
   }
   return getDefaultData();
 }
 
-// Load data from localStorage (with changes)
 export function loadData(): AppData | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -29,21 +24,19 @@ export function loadData(): AppData | null {
       return JSON.parse(stored);
     }
   } catch (error) {
-    console.error('Failed to load data from localStorage:', error);
+    console.error('Failed to load data:', error);
   }
   return null;
 }
 
-// Save data to localStorage
 export function saveData(data: AppData): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
-    console.error('Failed to save data:', error);
+    console.error('Failed to save ', error);
   }
 }
 
-// Export data as JSON file
 export function exportData(data: AppData): void {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -56,23 +49,35 @@ export function exportData(data: AppData): void {
   URL.revokeObjectURL(url);
 }
 
-// Import data from JSON file
 export async function importData(file: File): Promise<AppData> {
   const text = await file.text();
-  const data = JSON.parse(text) as AppData;
-  return data;
+  return JSON.parse(text) as AppData;
+}
+
+export async function loadFromPath(path: string): Promise<AppData> {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error('Failed to load file');
+  return await response.json();
+}
+
+export function getSyncPath(): string | null {
+  return localStorage.getItem(SYNC_PATH_KEY);
+}
+
+export function setSyncPath(path: string | null): void {
+  if (path) {
+    localStorage.setItem(SYNC_PATH_KEY, path);
+  } else {
+    localStorage.removeItem(SYNC_PATH_KEY);
+  }
 }
 
 function getDefaultData(): AppData {
   return {
-    categories: [
-      { id: '1', name: 'Работа', icon: '💼', color: '#6366f1' },
-      { id: '2', name: 'Развлечения', icon: '🎮', color: '#a855f7' },
-      { id: '3', name: 'Обучение', icon: '📚', color: '#10b981' },
-      { id: '4', name: 'Новости', icon: '📰', color: '#f59e0b' },
-    ],
+    categories: [],
     bookmarks: [],
     tables: [],
+    tasks: [],
   };
 }
 

@@ -1,6 +1,7 @@
 @import './base.css';
 @import './app.css';
-@import './sidebar.css';
+@import './topbar.css';
 @import './bookmark-card.css';
 @import './table-card.css';
 @import './modal.css';
+@import './task-manager.css';
