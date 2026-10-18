@@ -116,38 +116,6 @@ export default function TopBar({
               <span className="topbar__nav-count">{tasksCount}</span>
             </button>
           </nav>
-
-          {activeView === 'bookmarks' && (
-            <div className="topbar__categories">
-              <button
-                className={`topbar__cat-btn ${activeCategory === null ? 'topbar__cat-btn--active' : ''}`}
-                onClick={() => onSelectCategory(null)}
-              >
-                Все
-              </button>
-              {categories.map((cat) => (
-                <div key={cat.id} className="topbar__cat-wrapper">
-                  <button
-                    className={`topbar__cat-btn ${activeCategory === cat.id ? 'topbar__cat-btn--active' : ''}`}
-                    onClick={() => onSelectCategory(cat.id)}
-                    style={{ '--cat-color': cat.color } as React.CSSProperties}
-                  >
-                    <span>{cat.icon}</span>
-                    <span>{cat.name}</span>
-                  </button>
-                  <div className="topbar__cat-actions">
-                    <button onClick={() => onEditCategory(cat)} title="Редактировать">✏️</button>
-                    {categories.length > 1 && (
-                      <button onClick={() => onDeleteCategory(cat.id)} title="Удалить">🗑️</button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              <button className="topbar__cat-btn topbar__cat-btn--add" onClick={onAddCategory} title="Добавить категорию">
-                +
-              </button>
-            </div>
-          )}
         </div>
 
         <div className="topbar__right">
@@ -179,6 +147,40 @@ export default function TopBar({
           </button>
         </div>
       </header>
+
+      {activeView === 'bookmarks' && (
+        <div className="topbar__categories-row">
+          <div className="topbar__categories">
+            <button
+              className={`topbar__cat-btn ${activeCategory === null ? 'topbar__cat-btn--active' : ''}`}
+              onClick={() => onSelectCategory(null)}
+            >
+              Все
+            </button>
+            {categories.map((cat) => (
+              <div key={cat.id} className="topbar__cat-wrapper">
+                <button
+                  className={`topbar__cat-btn ${activeCategory === cat.id ? 'topbar__cat-btn--active' : ''}`}
+                  onClick={() => onSelectCategory(cat.id)}
+                  style={{ '--cat-color': cat.color } as React.CSSProperties}
+                >
+                  <span>{cat.icon}</span>
+                  <span>{cat.name}</span>
+                </button>
+                <div className="topbar__cat-actions">
+                  <button onClick={() => onEditCategory(cat)} title="Редактировать">✏️</button>
+                  {categories.length > 1 && (
+                    <button onClick={() => onDeleteCategory(cat.id)} title="Удалить">🗑️</button>
+                  )}
+                </div>
+              </div>
+            ))}
+            <button className="topbar__cat-btn topbar__cat-btn--add" onClick={onAddCategory} title="Добавить категорию">
+              +
+            </button>
+          </div>
+        </div>
+      )}
 
       {showSyncModal && (
         <div className="modal-overlay" onClick={() => setShowSyncModal(false)}>
