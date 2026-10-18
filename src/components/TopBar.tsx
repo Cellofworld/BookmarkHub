@@ -40,8 +40,6 @@ export default function TopBar({
   const [syncPath, setSyncPathState] = useState(getSyncPath() || '');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [showSyncModal, setShowSyncModal] = useState(false);
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
 
   const handleExport = () => {
     exportData(data);
