@@ -1,0 +1,75 @@
+{
+  "categories": [
+    { "id": "1", "name": "Работа", "icon": "💼", "color": "#6366f1" },
+    { "id": "2", "name": "Развлечения", "icon": "🎮", "color": "#a855f7" },
+    { "id": "3", "name": "Обучение", "icon": "📚", "color": "#10b981" },
+    { "id": "4", "name": "Новости", "icon": "📰", "color": "#f59e0b" }
+  ],
+  "bookmarks": [
+    { "id": "1", "title": "Google", "url": "https://google.com", "description": "Поисковая система", "categoryId": "1", "favicon": "", "createdAt": 1704067200000 },
+    { "id": "2", "title": "GitHub", "url": "https://github.com", "description": "Платформа для разработки", "categoryId": "1", "favicon": "", "createdAt": 1704153600000 },
+    { "id": "3", "title": "YouTube", "url": "https://youtube.com", "description": "Видеохостинг", "categoryId": "2", "favicon": "", "createdAt": 1704240000000 },
+    { "id": "4", "title": "MDN", "url": "https://developer.mozilla.org", "description": "Документация", "categoryId": "3", "favicon": "", "createdAt": 1704326400000 }
+  ],
+  "tables": [
+    {
+      "id": "1",
+      "title": "Расписание занятий",
+      "description": "Еженедельное расписание",
+      "headers": ["День", "Время", "Предмет", "Аудитория"],
+      "rows": [
+        ["Понедельник", "09:00", "Математика", "301"],
+        ["Понедельник", "11:00", "Физика", "205"],
+        ["Вторник", "10:00", "Программирование", "410"]
+      ],
+      "cellStyles": {
+        "0-2": { "bold": true, "color": "#6366f1" }
+      },
+      "createdAt": 1704585600000,
+      "updatedAt": 1704585600000
+    }
+  ],
+  "tasks": [
+    {
+      "id": "1",
+      "title": "Завершить проект BookmarkHub",
+      "description": "Доработать функционал и протестировать",
+      "status": "in-progress",
+      "priority": "high",
+      "dueDate": 1735689600000,
+      "tags": ["работа", "срочно"],
+      "subtasks": [
+        { "id": "s1", "title": "Добавить экспорт в JSON", "done": true },
+        { "id": "s2", "title": "Написать документацию", "done": false },
+        { "id": "s3", "title": "Протестировать на мобильных", "done": false }
+      ],
+      "createdAt": 1735000000000,
+      "updatedAt": 1735000000000
+    },
+    {
+      "id": "2",
+      "title": "Купить продукты",
+      "description": "Молоко, хлеб, овощи",
+      "status": "todo",
+      "priority": "medium",
+      "tags": ["дом"],
+      "subtasks": [],
+      "createdAt": 1735100000000,
+      "updatedAt": 1735100000000
+    },
+    {
+      "id": "3",
+      "title": "Изучить React Hooks",
+      "description": "useEffect, useMemo, useCallback",
+      "status": "done",
+      "priority": "low",
+      "tags": ["обучение"],
+      "subtasks": [
+        { "id": "s4", "title": "useState", "done": true },
+        { "id": "s5", "title": "useEffect", "done": true }
+      ],
+      "createdAt": 1734900000000,
+      "updatedAt": 1735200000000
+    }
+  ]
+}
