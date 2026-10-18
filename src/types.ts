@@ -14,3 +14,13 @@ export interface Category {
   icon: string;
   color: string;
 }
+
+export interface Table {
+  id: string;
+  title: string;
+  description: string;
+  headers: string[];
+  rows: string[][];
+  createdAt: number;
+  updatedAt: number;
+}

@@ -3,8 +3,11 @@ import { Category, Bookmark } from '../types';
 interface SidebarProps {
   categories: Category[];
   bookmarks: Bookmark[];
+  tablesCount: number;
   activeCategory: string | null;
+  activeView: 'bookmarks' | 'tables';
   onSelectCategory: (id: string | null) => void;
+  onChangeView: (view: 'bookmarks' | 'tables') => void;
   onAddCategory: () => void;
   onEditCategory: (category: Category) => void;
   onDeleteCategory: (id: string) => void;
@@ -15,8 +18,11 @@ interface SidebarProps {
 export default function Sidebar({
   categories,
   bookmarks,
+  tablesCount,
   activeCategory,
+  activeView,
   onSelectCategory,
+  onChangeView,
   onAddCategory,
   onEditCategory,
   onDeleteCategory,
@@ -42,87 +48,135 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Categories */}
-      <div className="flex-1 overflow-y-auto p-3">
-        <div className="flex items-center justify-between mb-3 px-2">
-          <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-            Категории
-          </h2>
+      {/* Navigation */}
+      <div className="p-3 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
           <button
-            onClick={onAddCategory}
-            className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-indigo-500 transition-all"
-            title="Добавить категорию"
+            onClick={() => onChangeView('bookmarks')}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeView === 'bookmarks'
+                ? 'bg-white dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <span>🔖</span>
+            <span>Закладки</span>
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300">
+              {bookmarks.length}
+            </span>
+          </button>
+          <button
+            onClick={() => onChangeView('tables')}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeView === 'tables'
+                ? 'bg-white dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            <span>📊</span>
+            <span>Таблицы</span>
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300">
+              {tablesCount}
+            </span>
           </button>
         </div>
+      </div>
 
-        {/* All bookmarks */}
-        <button
-          onClick={() => onSelectCategory(null)}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-all ${
-            activeCategory === null
-              ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-          }`}
-        >
-          <span className="text-lg">📋</span>
-          <span className="flex-1 text-left text-sm font-medium">Все закладки</span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-            {bookmarks.length}
-          </span>
-        </button>
+      {/* Categories (only for bookmarks view) */}
+      <div className="flex-1 overflow-y-auto p-3">
+        {activeView === 'bookmarks' ? (
+          <>
+            <div className="flex items-center justify-between mb-3 px-2">
+              <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                Категории
+              </h2>
+              <button
+                onClick={onAddCategory}
+                className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-indigo-500 transition-all"
+                title="Добавить категорию"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </div>
 
-        {/* Category list */}
-        {categories.map((cat) => (
-          <div key={cat.id} className="group relative">
+            {/* All bookmarks */}
             <button
-              onClick={() => onSelectCategory(cat.id)}
+              onClick={() => onSelectCategory(null)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-all ${
-                activeCategory === cat.id
+                activeCategory === null
                   ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
             >
-              <span className="text-lg">{cat.icon}</span>
-              <span className="flex-1 text-left text-sm font-medium truncate">{cat.name}</span>
+              <span className="text-lg">📋</span>
+              <span className="flex-1 text-left text-sm font-medium">Все закладки</span>
               <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                {getCategoryCount(cat.id)}
+                {bookmarks.length}
               </span>
             </button>
-            {/* Category actions */}
-            <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditCategory(cat);
-                }}
-                className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900 text-gray-400 hover:text-indigo-600 transition-all"
-                title="Редактировать"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
-              {categories.length > 1 && (
+
+            {/* Category list */}
+            {categories.map((cat) => (
+              <div key={cat.id} className="group relative">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteCategory(cat.id);
-                  }}
-                  className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-red-100 dark:hover:bg-red-900 text-gray-400 hover:text-red-600 transition-all"
-                  title="Удалить"
+                  onClick={() => onSelectCategory(cat.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-all ${
+                    activeCategory === cat.id
+                      ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
                 >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <span className="text-lg">{cat.icon}</span>
+                  <span className="flex-1 text-left text-sm font-medium truncate">{cat.name}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                    {getCategoryCount(cat.id)}
+                  </span>
                 </button>
-              )}
+                {/* Category actions */}
+                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditCategory(cat);
+                    }}
+                    className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900 text-gray-400 hover:text-indigo-600 transition-all"
+                    title="Редактировать"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  {categories.length > 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteCategory(cat.id);
+                      }}
+                      className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-red-100 dark:hover:bg-red-900 text-gray-400 hover:text-red-600 transition-all"
+                      title="Удалить"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-center px-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 flex items-center justify-center mb-3">
+              <span className="text-3xl">📊</span>
             </div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Таблицы</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Создавайте и управляйте таблицами для хранения структурированных данных
+            </p>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Footer */}
