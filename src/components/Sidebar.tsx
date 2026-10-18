@@ -1,4 +1,6 @@
 import { Category, Bookmark } from '../types';
+import { exportData, importData } from '../utils/dataStorage';
+import { AppData } from '../utils/dataStorage';
 
 interface SidebarProps {
   categories: Category[];
@@ -13,6 +15,8 @@ interface SidebarProps {
   onDeleteCategory: (id: string) => void;
   isDark: boolean;
   onToggleDark: () => void;
+  data: AppData;
+  onDataImport: (data: AppData) => void;
 }
 
 export default function Sidebar({
@@ -28,136 +32,145 @@ export default function Sidebar({
   onDeleteCategory,
   isDark,
   onToggleDark,
+  data,
+  onDataImport,
 }: SidebarProps) {
   const getCategoryCount = (catId: string) => {
     return bookmarks.filter((b) => b.categoryId === catId).length;
   };
 
+  const handleExport = () => {
+    exportData(data);
+  };
+
+  const handleImport = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        try {
+          const importedData = await importData(file);
+          onDataImport(importedData);
+        } catch (error) {
+          alert('Ошибка при импорте файла');
+        }
+      }
+    };
+    input.click();
+  };
+
   return (
-    <aside className="w-72 h-screen bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 flex flex-col overflow-hidden">
+    <aside className="sidebar">
       {/* Header */}
-      <div className="p-5 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-            <span className="text-white text-lg">🔖</span>
-          </div>
-          <div>
-            <h1 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">BookmarkHub</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Менеджер закладок</p>
+      <div className="sidebar__header">
+        <div className="sidebar__logo">
+          <div className="sidebar__logo-icon">🔖</div>
+          <div className="sidebar__logo-text">
+            <div className="sidebar__logo-title">BookmarkHub</div>
+            <div className="sidebar__logo-subtitle">Менеджер закладок</div>
           </div>
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="p-3 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
+      {/* Navigation Tabs */}
+      <div className="sidebar__nav">
+        <div className="sidebar__tabs">
           <button
+            className={`sidebar__tab ${activeView === 'bookmarks' ? 'sidebar__tab--active' : ''}`}
             onClick={() => onChangeView('bookmarks')}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeView === 'bookmarks'
-                ? 'bg-white dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
           >
-            <span>🔖</span>
+            <span className="sidebar__tab-icon">🔖</span>
             <span>Закладки</span>
-            <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300">
-              {bookmarks.length}
-            </span>
+            <span className="sidebar__tab-count">{bookmarks.length}</span>
           </button>
           <button
+            className={`sidebar__tab ${activeView === 'tables' ? 'sidebar__tab--active' : ''}`}
             onClick={() => onChangeView('tables')}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeView === 'tables'
-                ? 'bg-white dark:bg-gray-700 text-indigo-700 dark:text-indigo-300 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
           >
-            <span>📊</span>
+            <span className="sidebar__tab-icon">📊</span>
             <span>Таблицы</span>
-            <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300">
-              {tablesCount}
-            </span>
+            <span className="sidebar__tab-count">{tablesCount}</span>
           </button>
         </div>
       </div>
 
-      {/* Categories (only for bookmarks view) */}
-      <div className="flex-1 overflow-y-auto p-3">
+      {/* Data Management */}
+      <div className="sidebar__data-btns">
+        <button className="sidebar__data-btn" onClick={handleExport}>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Экспорт
+        </button>
+        <button className="sidebar__data-btn" onClick={handleImport}>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          Импорт
+        </button>
+      </div>
+
+      {/* Categories / Tables Info */}
+      <div className="sidebar__categories">
         {activeView === 'bookmarks' ? (
           <>
-            <div className="flex items-center justify-between mb-3 px-2">
-              <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                Категории
-              </h2>
-              <button
-                onClick={onAddCategory}
-                className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-indigo-500 transition-all"
-                title="Добавить категорию"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="sidebar__section-header">
+              <span className="sidebar__section-title">Категории</span>
+              <button className="sidebar__add-btn" onClick={onAddCategory} title="Добавить категорию">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
               </button>
             </div>
 
             {/* All bookmarks */}
-            <button
-              onClick={() => onSelectCategory(null)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-all ${
-                activeCategory === null
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-              }`}
-            >
-              <span className="text-lg">📋</span>
-              <span className="flex-1 text-left text-sm font-medium">Все закладки</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                {bookmarks.length}
-              </span>
-            </button>
+            <div className="sidebar__item">
+              <button
+                className={`sidebar__item-btn ${activeCategory === null ? 'sidebar__item-btn--active' : ''}`}
+                onClick={() => onSelectCategory(null)}
+              >
+                <span className="sidebar__item-icon">📋</span>
+                <span className="sidebar__item-name">Все закладки</span>
+                <span className="sidebar__item-count">{bookmarks.length}</span>
+              </button>
+            </div>
 
             {/* Category list */}
             {categories.map((cat) => (
-              <div key={cat.id} className="group relative">
+              <div key={cat.id} className="sidebar__item">
                 <button
+                  className={`sidebar__item-btn ${activeCategory === cat.id ? 'sidebar__item-btn--active' : ''}`}
                   onClick={() => onSelectCategory(cat.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-all ${
-                    activeCategory === cat.id
-                      ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}
                 >
-                  <span className="text-lg">{cat.icon}</span>
-                  <span className="flex-1 text-left text-sm font-medium truncate">{cat.name}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                    {getCategoryCount(cat.id)}
-                  </span>
+                  <span className="sidebar__item-icon">{cat.icon}</span>
+                  <span className="sidebar__item-name">{cat.name}</span>
+                  <span className="sidebar__item-count">{getCategoryCount(cat.id)}</span>
                 </button>
-                {/* Category actions */}
-                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="sidebar__item-actions">
                   <button
+                    className="sidebar__item-action"
                     onClick={(e) => {
                       e.stopPropagation();
                       onEditCategory(cat);
                     }}
-                    className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900 text-gray-400 hover:text-indigo-600 transition-all"
                     title="Редактировать"
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
                   {categories.length > 1 && (
                     <button
+                      className="sidebar__item-action sidebar__item-action--delete"
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteCategory(cat.id);
                       }}
-                      className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-red-100 dark:hover:bg-red-900 text-gray-400 hover:text-red-600 transition-all"
                       title="Удалить"
                     >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
@@ -167,26 +180,21 @@ export default function Sidebar({
             ))}
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 flex items-center justify-center mb-3">
-              <span className="text-3xl">📊</span>
-            </div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Таблицы</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="sidebar__info">
+            <div className="sidebar__info-icon">📊</div>
+            <div className="sidebar__info-title">Таблицы</div>
+            <div className="sidebar__info-description">
               Создавайте и управляйте таблицами для хранения структурированных данных
-            </p>
+            </div>
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-gray-100 dark:border-gray-800">
-        <button
-          onClick={onToggleDark}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
-        >
-          <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
-          <span className="text-sm font-medium">{isDark ? 'Светлая тема' : 'Тёмная тема'}</span>
+      <div className="sidebar__footer">
+        <button className="sidebar__theme-btn" onClick={onToggleDark}>
+          <span className="sidebar__theme-icon">{isDark ? '☀️' : '🌙'}</span>
+          <span>{isDark ? 'Светлая тема' : 'Тёмная тема'}</span>
         </button>
       </div>
     </aside>

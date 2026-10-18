@@ -1,0 +1,113 @@
+{
+  "categories": [
+    {
+      "id": "1",
+      "name": "Работа",
+      "icon": "💼",
+      "color": "#6366f1"
+    },
+    {
+      "id": "2",
+      "name": "Развлечения",
+      "icon": "🎮",
+      "color": "#a855f7"
+    },
+    {
+      "id": "3",
+      "name": "Обучение",
+      "icon": "📚",
+      "color": "#10b981"
+    },
+    {
+      "id": "4",
+      "name": "Новости",
+      "icon": "📰",
+      "color": "#f59e0b"
+    }
+  ],
+  "bookmarks": [
+    {
+      "id": "1",
+      "title": "Google",
+      "url": "https://google.com",
+      "description": "Поисковая система Google",
+      "categoryId": "1",
+      "favicon": "",
+      "createdAt": 1704067200000
+    },
+    {
+      "id": "2",
+      "title": "GitHub",
+      "url": "https://github.com",
+      "description": "Платформа для разработки и хостинга кода",
+      "categoryId": "1",
+      "favicon": "",
+      "createdAt": 1704153600000
+    },
+    {
+      "id": "3",
+      "title": "YouTube",
+      "url": "https://youtube.com",
+      "description": "Видеохостинг",
+      "categoryId": "2",
+      "favicon": "",
+      "createdAt": 1704240000000
+    },
+    {
+      "id": "4",
+      "title": "MDN Web Docs",
+      "url": "https://developer.mozilla.org",
+      "description": "Документация по веб-технологиям",
+      "categoryId": "3",
+      "favicon": "",
+      "createdAt": 1704326400000
+    },
+    {
+      "id": "5",
+      "title": "Stack Overflow",
+      "url": "https://stackoverflow.com",
+      "description": "Вопросы и ответы для программистов",
+      "categoryId": "3",
+      "favicon": "",
+      "createdAt": 1704412800000
+    },
+    {
+      "id": "6",
+      "title": "Hacker News",
+      "url": "https://news.ycombinator.com",
+      "description": "Новости из мира технологий",
+      "categoryId": "4",
+      "favicon": "",
+      "createdAt": 1704499200000
+    }
+  ],
+  "tables": [
+    {
+      "id": "1",
+      "title": "Расписание занятий",
+      "description": "Еженедельное расписание",
+      "headers": ["День", "Время", "Предмет", "Аудитория"],
+      "rows": [
+        ["Понедельник", "09:00", "Математика", "301"],
+        ["Понедельник", "11:00", "Физика", "205"],
+        ["Вторник", "10:00", "Программирование", "410"],
+        ["Среда", "09:00", "Английский язык", "102"]
+      ],
+      "createdAt": 1704585600000,
+      "updatedAt": 1704585600000
+    },
+    {
+      "id": "2",
+      "title": "Список покупок",
+      "description": "Продукты на неделю",
+      "headers": ["Продукт", "Количество", "Цена", "Магазин"],
+      "rows": [
+        ["Молоко", "2 л", "80 ₽", "Пятёрочка"],
+        ["Хлеб", "1 шт", "45 ₽", "Пятёрочка"],
+        ["Яблоки", "1 кг", "120 ₽", "Магнит"]
+      ],
+      "createdAt": 1704672000000,
+      "updatedAt": 1704672000000
+    }
+  ]
+}
